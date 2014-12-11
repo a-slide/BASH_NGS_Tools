@@ -38,6 +38,7 @@ do
     samtools index "$OUTPUT".bam
     echo -e "\nCreating bed file\n"
     genomeCoverageBed -ibam "$OUTPUT".bam -bga -trackline -trackopts "name="$OUTPUT" color=250,0,0" > "$OUTPUT".bedgraph
+    genomeCoverageBed -ibam "$OUTPUT".bam -d > "$OUTPUT".bed
     # Shift the arguments to process next argument 
     shift
     shift
