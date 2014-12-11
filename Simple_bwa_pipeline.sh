@@ -1,14 +1,8 @@
 #! /bin/bash
 
-
-if [[ $# < 3 ]]; then
-    echo -e "\nUsage of HTS_mapping_AAV_and_back\n
-    Arg 1 = index
-    Arg 2 = Sample1_R1.fastq
-    Arg 3 = Suffix of R1 to remove from outpit name
-    Arg 4 = Sample1_R2.fastq
-    [Arg n-1 = SampleN_R1.fastq
-    Arg n = SampleN_R2.fastq]"
+if [[ "$#" == 0 ]]
+then
+    echo -e "\nUsage of HTS_mapping_AAV_and_back <INDEX> <Sufix_to_remove> <S1-R1.fastq> <S1-R2.fastq> [<S2-R1.fastq> <S2-R2.fastq>  ...]"
     exit 1
 fi
 
@@ -30,8 +24,8 @@ do
     b=`basename $1`
     OUTPUT=${b%$SUFFIX}
     
-    
     echo -e "PROCESSING $OUTPUT : ALIGNING `basename $1` AND `basename $2` AGAINST `basename $INDEX`"
+    # Main pipeline
     echo -e "Mapping with bwa mem and sort bam\n"
     bwa-0.7.10 mem -M -t 12 "$INDEX" "$1" "$2" | samtools view -F 4 -hbS - | samtools sort - "$OUTPUT"
     echo -e "\nProcessing with samtools index\n"
@@ -39,9 +33,13 @@ do
     echo -e "\nCreating bed file\n"
     genomeCoverageBed -ibam "$OUTPUT".bam -bga -trackline -trackopts "name="$OUTPUT" color=250,0,0" > "$OUTPUT".bedgraph
     genomeCoverageBed -ibam "$OUTPUT".bam -d > "$OUTPUT".bed
-    # Shift the arguments to process next argument 
+    echo -e "$OUTPUT PROCESSED\n"
+    
+    # Shift the arguments to process next fastq files
     shift
     shift
 done
+
+echo -e "#### DONE ####"
 
 exit 0
