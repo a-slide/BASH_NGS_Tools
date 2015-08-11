@@ -2,9 +2,16 @@
 
 if [[ "$#" != 5 ]]
 then
-    echo -e "USAGE: bwa_pipeline_single.sh <bwa_index_path> <sequence.fa.gz> <gff_file> <min_mapq_score> <n_threads>"
+    echo -e "USAGE: RNAseq_bac_pipeline.sh <bwa_index_path> <sequence.fa.gz> <gff_file> <min_mapq_score> <n_threads>"
     exit 1
 fi
+
+# OPTIONS
+# $1 = STAR_index_dir
+# $2 = R1.fa.gz
+# $3 = gff_file
+# $4 = min_mapq_score
+# $5 = n_threads
 
 # Dependencies
 # samtools 1.2+
@@ -15,7 +22,8 @@ fi
 
 # Extract basename
 bn=`basename ${2%.fastq.gz}`
-echo -e "PROCESSING SAMPLE: $bn\n"
+
+echo -e "\n########################## PROCESSING SAMPLE: $5 ##########################\n"
 
 # Align with bwa mem
 echo -e "Mapping with bwa mem and sort bam\n"
@@ -24,17 +32,18 @@ samstat "$bn"_raw.bam
 
 ## Filter out unmapped and secondary reads 
 echo -e "Filter_bam\n"
-samtools view "$bn"_raw.bam -hb -F 260 -q "$4" | samtools sort - -@ "$5" -o a > "$bn".bam
+samtools view "$bn"_raw.bam -hb -F 260 -q "$4" -@ "$5"| samtools sort - -@ "$5" -o a > "$bn".bam
 samstat "$bn".bam 
 
 ## Index bam and generates bedgraph
 echo -e "\nProcessing with samtools index\n"
 samtools index "$bn".bam
 echo -e "\nCreating bedgraph\n"
-genomeCoverageBed -ibam "$bn".bam -bga -trackline -trackopts "name="$bn" color=250,0,0" > "$bn".bedgraph
+genomeCoverageBed -ibam "$bn".bam -bg -trackline -trackopts "name="$bn" color=250,0,0" | \
+awk '$1 ~ "bedGraph" || $4 > 5' > "$bn".bedgraph
 
 # Create HTSeq-Count file
 echo -e "\nCounting reads overlaping features with HTSeq count\n"
-htseq-count -f bam -s no -m union -t exon "$bn".bam "$3" > $bn.counts
+htseq-count -f bam -s no -m union -t exon "$bn".bam "$3" > "$bn".counts
 
 exit 0
