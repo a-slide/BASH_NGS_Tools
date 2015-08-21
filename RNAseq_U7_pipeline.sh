@@ -52,7 +52,7 @@ awk '$4 >= 5' > "$bn"negative_strand.bedgraph
 
 # Create HTSeq-Count file
 echo -e "\nCounting reads overlaping features with HTSeq count\n"
-htseq-count -f bam -s yes -m union -t exon "$bn".bam "$4" > "$bn".counts
+htseq-count -f bam -s no -m intersection-nonempty -t exon "$bn".bam "$4" > "$bn".counts
 
 echo -e "\n### DONE ###\n"
 
